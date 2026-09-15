@@ -45,3 +45,5 @@ requests>=2.32.0
 
 langchain-google-genai
 langchain-text-splitters
+
+python-dotenv
