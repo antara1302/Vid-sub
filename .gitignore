@@ -1,0 +1,32 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python caches and test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Generated audio/video files
+downloades/*
+
+# Local Chroma vector database
+vector_db/
+
+# Logs and local runtime files
+*.log
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+desktop.ini
