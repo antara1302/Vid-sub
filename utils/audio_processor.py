@@ -1,11 +1,18 @@
-from setup_env import setup, GENERATE_ONCE_JS
+import os
+import sys
+
+from setup_env import setup, GENERATE_ONCE_JS,BGUTIL_SERVER_DIR
 
 setup()
+print("BGUTIL SERVER:", BGUTIL_SERVER_DIR)
+print("GENERATE ONCE:", GENERATE_ONCE_JS)
+print("SERVER EXISTS:", os.path.isdir(BGUTIL_SERVER_DIR))
+print("SCRIPT EXISTS:", os.path.isfile(GENERATE_ONCE_JS))
 
 import yt_dlp
 from pydub import AudioSegment
-import os
-import sys
+
+
 
 # Load bgutil yt-dlp plugin
 PLUGIN_DIR = os.path.abspath(
