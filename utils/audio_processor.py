@@ -44,8 +44,8 @@ def download_youtube_audio(url :str) ->str:
         },
         "plugin_dirs": [PLUGIN_DIR],
         "extractor_args": {
-            "youtubepot-bgutilscript": {
-                "server_home": "bgutil-ytdlp-pot-provider/server"
+            "youtubepot-bgutilhttp": {
+                "base_url": "http://127.0.0.1:4416"
             }
         },
         "http_headers": {

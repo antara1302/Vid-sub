@@ -116,13 +116,22 @@ def ensure_bgutil_dependencies():
     )
 
 
+def start_bgutil_server():
+    npm = os.path.join(NODE_BIN, "npm")
+
+    print("Starting bgutil HTTP server...")
+
+    subprocess.Popen(
+        [npm, "start"],
+        cwd=BGUTIL_SERVER_DIR,
+    )
+
+    print("bgutil HTTP server started on port 4416")
+
+
 def setup():
     ensure_node22()
     ensure_bgutil_dependencies()
+    start_bgutil_server()
 
-    if not os.path.exists(GENERATE_ONCE_JS):
-        raise RuntimeError(
-            f"generate_once.js not found: {GENERATE_ONCE_JS}"
-        )
-
-    print("Node 22 + bgutil setup complete")
+    print("Node 22 + bgutil HTTP setup complete")
