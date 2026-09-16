@@ -28,7 +28,7 @@ def download_youtube_audio(url :str) ->str:
         "format": "bestaudio/best",
 
         "js_runtimes": {
-        
+            "node": {},
             "quickjs": {},
         },
         "plugin_dirs": [PLUGIN_DIR],
