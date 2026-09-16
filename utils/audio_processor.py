@@ -1,4 +1,4 @@
-from setup_env import setup, GENERATE_ONCE_JS,BGUTIL_SERVER_DIR
+from setup_env import setup, GENERATE_ONCE_JS
 
 setup()
 
@@ -38,7 +38,7 @@ def download_youtube_audio(url :str) ->str:
         "plugin_dirs": [PLUGIN_DIR],
         "extractor_args": {
             "youtubepot-bgutilscript": {
-                "script_path": GENERATE_ONCE_JS
+                "server_home": os.path.dirname(os.path.dirname(GENERATE_ONCE_JS))
             }
         },
         "http_headers": {
