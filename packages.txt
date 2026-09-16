@@ -1,4 +1,1 @@
 ffmpeg
-quickjs
-nodejs
-npm

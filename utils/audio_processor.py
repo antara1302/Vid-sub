@@ -1,3 +1,7 @@
+from setup_env import setup, GENERATE_ONCE_JS
+
+setup()
+
 import yt_dlp
 from pydub import AudioSegment
 import os
@@ -34,14 +38,7 @@ def download_youtube_audio(url :str) ->str:
         "plugin_dirs": [PLUGIN_DIR],
         "extractor_args": {
             "youtubepot-bgutilscript": {
-                "server_home": os.path.abspath(
-                    os.path.join(
-                        os.path.dirname(__file__),
-                        "..",
-                        "bgutil-ytdlp-pot-provider",
-                        "server",
-                    )
-                )
+                "script_path": GENERATE_ONCE_JS
             }
         },
         "http_headers": {
