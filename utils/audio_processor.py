@@ -15,6 +15,7 @@ def download_youtube_audio(url :str) ->str:
 
         "js_runtimes": {
             "node": {},
+            "quickjs": {},
         },
         "extractor_args": {
             "youtubepot-bgutilscript": {

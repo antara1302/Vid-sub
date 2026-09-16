@@ -3,6 +3,7 @@
 
 # ── Audio / Video acquisition ─────────────────────────────────────────────────
 yt-dlp==2026.8.19                  # Download audio from YouTube URLs
+yt-dlp-ejs
 pydub>=0.25.1                     # Audio file manipulation / format conversion
 ffmpeg-python>=0.2.0            # FFmpeg bindings (FFmpeg binary must be installed separately)
 
