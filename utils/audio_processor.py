@@ -38,7 +38,7 @@ def download_youtube_audio(url :str) ->str:
         "plugin_dirs": [PLUGIN_DIR],
         "extractor_args": {
             "youtubepot-bgutilscript": {
-                "script_path": BGUTIL_SERVER_DIR
+                "script_path": GENERATE_ONCE_JS
             }
         },
         "http_headers": {
