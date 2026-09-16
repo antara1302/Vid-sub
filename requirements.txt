@@ -2,9 +2,9 @@
 # Python >= 3.10 recommended
 
 # ── Audio / Video acquisition ─────────────────────────────────────────────────
-yt-dlp>=2026.8.22                  # Download audio from YouTube URLs
+yt-dlp==2026.8.22                  # Download audio from YouTube URLs
 pydub>=0.25.1                     # Audio file manipulation / format conversion
-yt-dlp==2026.8.19           # FFmpeg bindings (FFmpeg binary must be installed separately)
+ffmpeg-python>=0.2.0            # FFmpeg bindings (FFmpeg binary must be installed separately)
 
 # ── Speech-to-Text (local Whisper) ────────────────────────────────────────────
 openai-whisper>=20231117          # OpenAI Whisper (runs locally)
