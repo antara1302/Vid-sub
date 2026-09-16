@@ -32,7 +32,20 @@ def download_youtube_audio(url :str) ->str:
             "quickjs": {},
         },
         "plugin_dirs": [PLUGIN_DIR],
-
+        "extractor_args": {
+            "youtubepot-bgutilscript": {
+                "script_path": os.path.abspath(
+                    os.path.join(
+                        os.path.dirname(__file__),
+                        "..",
+                        "bgutil-ytdlp-pot-provider",
+                        "server",
+                        "build",
+                        "generate_once.js",
+                    )
+                )
+            }
+        },
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
