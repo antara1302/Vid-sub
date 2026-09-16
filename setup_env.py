@@ -4,7 +4,7 @@ import tarfile
 import urllib.request
 import shutil
 
-NODE_VERSION = "22.11.0"
+NODE_VERSION = "22.12.0"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
