@@ -45,8 +45,7 @@ def download_youtube_audio(url :str) ->str:
         "plugin_dirs": [PLUGIN_DIR],
         "extractor_args": {
             "youtubepot-bgutilhttp": {
-                "base_url": "http://127.0.0.1:4416",
-                "disable_innertube": "1"
+                "base_url": "http://127.0.0.1:4416"
             },
             "youtube": {
                 "player_client": ["mweb"]
