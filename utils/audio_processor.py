@@ -1,6 +1,20 @@
 import yt_dlp
 from pydub import AudioSegment
 import os
+import sys
+
+# Load bgutil yt-dlp plugin
+PLUGIN_DIR = os.path.abspath(
+    os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "bgutil-ytdlp-pot-provider",
+        "plugin",
+    )
+)
+
+if PLUGIN_DIR not in sys.path:
+    sys.path.insert(0, PLUGIN_DIR)
 
 #folder to save all vdos:
 DOWNLOAD_DIR = 'downloades'
@@ -17,6 +31,7 @@ def download_youtube_audio(url :str) ->str:
         
             "quickjs": {},
         },
+        "plugin_dirs": [PLUGIN_DIR],
 
         "http_headers": {
             "User-Agent": (
