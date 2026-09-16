@@ -30,3 +30,5 @@ vector_db/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+bgutil-ytdlp-pot-provider/server/node_modules/
