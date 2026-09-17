@@ -48,7 +48,7 @@ def download_youtube_audio(url :str) ->str:
                 "base_url": ["http://127.0.0.1:4416"]
             },
             "youtube": {
-                "player_client": ["mweb"]
+                "player_client": ["android_vr"]
             }
         },
         "http_headers": {
