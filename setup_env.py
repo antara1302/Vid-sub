@@ -1,8 +1,10 @@
 import os
+import socket, time
 import subprocess
 import tarfile
 import urllib.request
 import shutil
+
 
 NODE_VERSION = "22.12.0"
 
@@ -118,16 +120,17 @@ def ensure_bgutil_dependencies():
 
 def start_bgutil_server():
     npm = os.path.join(NODE_BIN, "npm")
-
     print("Starting bgutil HTTP server...")
+    subprocess.Popen([npm, "start"], cwd=BGUTIL_SERVER_DIR)
 
-    subprocess.Popen(
-        [npm, "start"],
-        cwd=BGUTIL_SERVER_DIR,
-    )
-
-    print("bgutil HTTP server started on port 4416")
-
+    for _ in range(30):
+        try:
+            with socket.create_connection(("127.0.0.1", 4416), timeout=1):
+                print("bgutil HTTP server is ready on port 4416")
+                return
+        except OSError:
+            time.sleep(0.5)
+    raise RuntimeError("bgutil HTTP server did not become ready in time")
 
 def setup():
     ensure_node22()
