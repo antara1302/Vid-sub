@@ -6,6 +6,7 @@ from core.transcriber import transcribe_all
 from core.summarizer import summarize, generate_title
 from core.extractor import extract_meeting_data
 from core.rag_engine import build_rag_chain, ask_question
+from youtube_transcript_api import YouTubeTranscriptApi
 
 load_dotenv()
 
@@ -663,3 +664,23 @@ else:
             <span class="badge badge-green">RAG Chat</span>
         </div>
     </div>""", unsafe_allow_html=True)
+
+    
+
+st.write("Testing YouTube transcript...")
+
+try:
+    api = YouTubeTranscriptApi()
+
+    transcript = api.fetch(
+        "PeMlggyqz0Y",
+        languages=["en"]
+    )
+
+    text = " ".join(snippet.text for snippet in transcript)
+
+    st.success("✅ Transcript works on Streamlit Cloud!")
+    st.write(text[:2000])
+
+except Exception as e:
+    st.error(f"❌ Transcript failed: {type(e).__name__}: {e}")
