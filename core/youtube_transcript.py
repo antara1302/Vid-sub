@@ -38,16 +38,23 @@ def extract_video_id(source: str) -> str | None:
     return None
 
 
-def get_youtube_transcript(video_id: str) -> str:
+def get_youtube_transcript(
+    video_id: str,
+    languages: list[str] | None = None
+) -> str:
     """
-    Fetch an English YouTube transcript and return plain text.
+    Fetch a YouTube transcript in the requested language(s)
+    and return plain text.
     """
+
+    if languages is None:
+        languages = ["en"]
 
     api = YouTubeTranscriptApi()
 
     transcript = api.fetch(
         video_id,
-        languages=["en"],
+        languages=languages,
     )
 
     return " ".join(

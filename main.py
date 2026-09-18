@@ -21,53 +21,37 @@ def run_pipeline(source: str, language: str = "english") -> dict:
     video_id = extract_video_id(source)
 
     if video_id:
-        try:
-            print("YouTube URL detected.")
-            print("Trying to fetch YouTube transcript...")
+        print("YouTube URL detected.")
+        print("Trying to fetch YouTube transcript...")
 
-            transcript = get_youtube_transcript(video_id)
-
-            if not transcript:
-                raise RuntimeError("YouTube transcript is empty.")
-
-            print("✅ YouTube transcript found.")
-            print(
-                f"Raw transcript (first 300 characters): "
-                f"{transcript[:300]}"
+        if language.lower() == "hinglish":
+            # Hindi videos commonly have Hindi auto-generated captions
+            transcript = get_youtube_transcript(
+                video_id,
+                languages=["hi", "en"]
+            )
+        else:
+            transcript = get_youtube_transcript(
+                video_id,
+                languages=["en"]
             )
 
-        except Exception as e:
-            print(
-                f"⚠️ YouTube transcript unavailable: "
-                f"{type(e).__name__}: {e}"
-            )
-            print("Falling back to audio transcription...")
-
-            # Import only when fallback is actually needed.
-            from utils.audio_processor import process_input
-
-            chunks = process_input(source)
-
-            transcript = transcribe_all(
-                chunks,
-                language
+        if not transcript:
+            raise RuntimeError(
+                "No usable YouTube transcript was found for this video."
             )
 
-    else:
-        # Local file / non-YouTube input
-        from utils.audio_processor import process_input
-
-        chunks = process_input(source)
-
-        transcript = transcribe_all(
-            chunks,
-            language
+        print("✅ YouTube transcript found.")
+        print(
+            f"Raw transcript (first 300 characters): "
+            f"{transcript[:300]}"
         )
 
-    print(
-        f"Raw transcription (first 300 characters): "
-        f"{transcript[:300]}"
-    )
+    else:
+        raise ValueError(
+            "Please provide a valid YouTube URL."
+        )
+
     #2. Transcript obtained above
     raw_transcript = transcript
 
