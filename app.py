@@ -1,12 +1,8 @@
 import streamlit as st
 import time
 from dotenv import load_dotenv
-from utils.audio_processor import process_input
-from core.transcriber import transcribe_all
-from core.summarizer import summarize, generate_title
-from core.extractor import extract_meeting_data
-from core.rag_engine import build_rag_chain, ask_question
-from youtube_transcript_api import YouTubeTranscriptApi
+from main import run_pipeline
+from core.rag_engine import ask_question
 
 load_dotenv()
 
@@ -496,56 +492,54 @@ if run_btn:
 
         try:
             with progress_placeholder.container():
-                st.info("⚙️ Pipeline running — see sidebar for live status…")
+                st.info(
+                    "⚙️ Pipeline running — see sidebar for live status…"
+                )
 
-            update_step("audio", "active")
-            chunks = process_input(source)
-            update_step("audio", "done")
-
+            # Run the complete pipeline.
+            # main.py handles:
+            # YouTube transcript → audio fallback → summary → extraction → RAG
             update_step("transcript", "active")
-            transcript = transcribe_all(chunks, language)
+
+            result = run_pipeline(
+                source,
+                language
+            )
+
+            # Pipeline completed successfully
             update_step("transcript", "done")
-
-            update_step("summary", "active")
-            summary = summarize(transcript)
             update_step("summary", "done")
-
-            update_step("title", "active")
-            title = generate_title(summary)
             update_step("title", "done")
-
-            update_step("extract", "active")
-            meeting_data = extract_meeting_data(transcript)
             update_step("extract", "done")
-
-            action_items = meeting_data.get("action_items", [])
-            decisions = meeting_data.get("key_decisions", [])
-            questions = meeting_data.get("open_questions", [])
-
-            update_step("rag", "active")
-            rag_chain = build_rag_chain(transcript)
             update_step("rag", "done")
 
-            st.session_state.result = {
-                "title": title,
-                "transcript": transcript,
-                "summary": summary,
-                "action_items": action_items,
-                "key_decisions": decisions,
-                "open_questions": questions,
-                "rag_chain": rag_chain,
-            }
+            st.session_state.result = result
             st.session_state.pipeline_done = True
-            progress_placeholder.success("✅ Analysis complete!")
+
+            progress_placeholder.success(
+                "✅ Analysis complete!"
+            )
+
             time.sleep(0.5)
             progress_placeholder.empty()
+
             st.rerun()
 
         except Exception as e:
-            for k in ["audio","transcript","title","summary","extract","rag"]:
+            for k in [
+                "audio",
+                "transcript",
+                "summary",
+                "title",
+                "extract",
+                "rag"
+            ]:
                 if st.session_state.pipeline_steps.get(k) == "active":
                     st.session_state.pipeline_steps[k] = "pending"
-            progress_placeholder.error(f"❌ Error: {e}")
+
+            progress_placeholder.error(
+                f"❌ Error: {e}"
+            )
 
 # ── Results ──────────────────────────────────────────────────────────────────────
 if st.session_state.result:
@@ -666,21 +660,3 @@ else:
     </div>""", unsafe_allow_html=True)
 
     
-
-st.write("Testing YouTube transcript...")
-
-try:
-    api = YouTubeTranscriptApi()
-
-    transcript = api.fetch(
-        "PeMlggyqz0Y",
-        languages=["en"]
-    )
-
-    text = " ".join(snippet.text for snippet in transcript)
-
-    st.success("✅ Transcript works on Streamlit Cloud!")
-    st.write(text[:2000])
-
-except Exception as e:
-    st.error(f"❌ Transcript failed: {type(e).__name__}: {e}")

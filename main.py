@@ -1,23 +1,65 @@
 from dotenv import load_dotenv
 
-from utils.audio_processor import process_input
 from core.transcriber import transcribe_all
 from core.summarizer import summarize, generate_title
 from core.extractor import extract_meeting_data
 from core.rag_engine import build_rag_chain, ask_question
-
-
+from core.youtube_transcript import (
+    extract_video_id,
+    get_youtube_transcript,
+)
 load_dotenv()
-
 
 def run_pipeline(source: str, language: str = "english") -> dict:
     print("Starting AI Video Assistant")
 
-    # 1. Process input
-    chunks = process_input(source)
+    # 1. Try YouTube transcript first
+    video_id = extract_video_id(source)
 
-    # 2. Transcribe audio
-    transcript = transcribe_all(chunks, language)
+    if video_id:
+        try:
+            print("YouTube URL detected.")
+            print("Trying to fetch YouTube transcript...")
+
+            transcript = get_youtube_transcript(video_id)
+
+            if not transcript:
+                raise RuntimeError("YouTube transcript is empty.")
+
+            print("✅ YouTube transcript found.")
+            print(
+                f"Raw transcript (first 300 characters): "
+                f"{transcript[:300]}"
+            )
+
+        except Exception as e:
+            print(
+                f"⚠️ YouTube transcript unavailable: "
+                f"{type(e).__name__}: {e}"
+            )
+            print("Falling back to audio transcription...")
+
+            # Import only when fallback is actually needed.
+            from utils.audio_processor import process_input
+
+            chunks = process_input(source)
+
+            transcript = transcribe_all(
+                chunks,
+                language
+            )
+
+    else:
+        # Local file / non-YouTube input
+        from utils.audio_processor import process_input
+
+        chunks = process_input(source)
+
+        transcript = transcribe_all(
+            chunks,
+            language
+        )
+
     print(
         f"Raw transcription (first 300 characters): "
         f"{transcript[:300]}"

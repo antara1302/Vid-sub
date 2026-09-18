@@ -1,21 +1,16 @@
-from youtube_transcript_api import YouTubeTranscriptApi
+from core.youtube_transcript import get_youtube_transcript
+
 
 video_id = "PeMlggyqz0Y"
 
 try:
-    api = YouTubeTranscriptApi()
+    text = get_youtube_transcript(video_id)
 
-    transcript = api.fetch(
-        video_id,
-        languages=["en"]
-    )
-
-    print("\n✅ TRANSCRIPT FOUND!\n")
-
-    for snippet in transcript:
-        print(snippet.text)
+    print("\n✅ Transcript extracted")
+    print("\nFirst 1000 characters:\n")
+    print(text[:1000])
 
 except Exception as e:
-    print("\n❌ TRANSCRIPT FAILED")
+    print("\n❌ Transcript extraction failed")
     print(type(e).__name__)
     print(e)
