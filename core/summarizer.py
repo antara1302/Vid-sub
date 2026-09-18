@@ -66,3 +66,31 @@ Do not use quotation marks.
     return chain.invoke({
         "summary": summary
     })
+
+def translate_to_english(transcript: str) -> str:
+    llm = get_llm()
+
+    prompt = ChatPromptTemplate.from_messages([
+        (
+            "system",
+            """You are an expert Hindi/Hinglish to English translator.
+
+Translate the following Hindi/Hinglish transcription into natural English.
+
+Rules:
+- Preserve the exact meaning.
+- Do not summarize.
+- Do not add information.
+- Keep technical terms in English where appropriate.
+- Preserve the original order and context.
+- Return ONLY the translated text.
+""",
+        ),
+        ("human", "{transcript}"),
+    ])
+
+    chain = prompt | llm | StrOutputParser()
+
+    return chain.invoke({
+        "transcript": transcript
+    })

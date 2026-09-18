@@ -1,7 +1,11 @@
 from dotenv import load_dotenv
 
 from core.transcriber import transcribe_all
-from core.summarizer import summarize, generate_title
+from core.summarizer import (
+    summarize,
+    generate_title,
+    translate_to_english,
+)
 from core.extractor import extract_meeting_data
 from core.rag_engine import build_rag_chain, ask_question
 from core.youtube_transcript import (
@@ -64,6 +68,15 @@ def run_pipeline(source: str, language: str = "english") -> dict:
         f"Raw transcription (first 300 characters): "
         f"{transcript[:300]}"
     )
+    #2. Transcript obtained above
+    raw_transcript = transcript
+
+    # Translate Hinglish/Hindi transcript to English
+    if language.lower() == "hinglish":
+        print("Translating Hinglish transcript to English...")
+        transcript = translate_to_english(raw_transcript)
+        print("✅ Translation complete.")
+
 
     # 3. Generate summary
     summary = summarize(transcript)
