@@ -1,13 +1,13 @@
+import os
+import shutil
+import tempfile
 from pathlib import Path
+
 from dotenv import load_dotenv
 
 from core.transcriber import transcribe_all
-from core.summarizer import (
-    summarize,
-    generate_title,
-    translate_to_english,
-)
-from core.extractor import extract_meeting_data
+from core.local_video import extract_audio_chunks
+from core.summarizer import summarize, generate_title
 from core.rag_engine import build_rag_chain
 from core.youtube_transcript import (
     extract_video_id,
@@ -17,67 +17,107 @@ from core.youtube_transcript import (
 load_dotenv()
 
 
-def run_pipeline(source: str, language: str = "english") -> dict:
+def run_pipeline(
+    source: str,
+    language: str = "english",
+    uploaded_video=None,
+) -> dict:
     print("Starting AI Video Assistant")
 
-    video_id = extract_video_id(source)
+    temp_video_path = None
+    chunk_paths = []
 
-    if video_id:
-        print("YouTube URL detected. Generating video notes...")
+    try:
+        video_id = extract_video_id(source) if source else None
 
-        languages = (
-            ["hi", "en"]
-            if language.lower() == "hinglish"
-            else ["en"]
-        )
-
-        content = get_youtube_video_notes(
-            video_id,
-            languages=languages,
-        )
-        content_type = "video_notes"
-
-    else:
-        file_path = Path(source).expanduser()
-
-        if not file_path.is_file():
+        if video_id and uploaded_video is not None:
             raise ValueError(
-                "Please provide a valid YouTube URL or existing local file."
+                "Please enter a YouTube URL or upload a local video, not both."
             )
 
-        raise NotImplementedError(
-            "Local-file transcription is unchanged but needs the existing "
-            "audio extraction/chunking pipeline to be connected here."
-        )
+        if video_id:
+            print("YouTube URL detected. Generating video notes...")
 
-    if not content or not content.strip():
-        raise RuntimeError("No usable video notes were generated.")
+            languages = (
+                ["hi", "en"]
+                if language.lower() == "hinglish"
+                else ["en"]
+            )
 
-    # The YouTube content is already structured notes.
-    # Do not translate it as if it were a raw transcript.
-    summary = summarize(content)
-    title = generate_title(summary)
+            content = get_youtube_video_notes(
+                video_id,
+                languages=languages,
+            )
+            content_type = "video_notes"
 
-    # The meeting extractor expects a meeting transcript.
-    # Don't invent meeting actions from ordinary video notes.
-    meeting_data = {
-        "action_items": [],
-        "key_decisions": [],
-        "open_questions": [],
-    }
+        elif uploaded_video is not None:
+            print("Local video uploaded. Extracting audio...")
 
-    rag_chain = build_rag_chain(content)
+            suffix = Path(uploaded_video.name).suffix or ".mp4"
 
-    return {
-        "title": title,
-        "transcript": content,  # Kept for app.py compatibility
-        "summary": summary,
-        "action_items": meeting_data["action_items"],
-        "key_decisions": meeting_data["key_decisions"],
-        "open_questions": meeting_data["open_questions"],
-        "rag_chain": rag_chain,
-        "content_type": content_type,
-    }
+            with tempfile.NamedTemporaryFile(
+                suffix=suffix,
+                delete=False,
+            ) as temp_video:
+                temp_video.write(uploaded_video.getbuffer())
+                temp_video_path = temp_video.name
+
+            chunk_paths = extract_audio_chunks(temp_video_path)
+
+            print(f"Created {len(chunk_paths)} audio chunks.")
+            content = transcribe_all(
+                chunk_paths,
+                language=language,
+            )
+            content_type = "transcript"
+
+        else:
+            raise ValueError(
+                "Enter a valid YouTube URL or upload a local video."
+            )
+
+        if not content or not content.strip():
+            raise RuntimeError("No usable notes or transcript were generated.")
+
+        summary = summarize(content)
+        title = generate_title(summary)
+
+        if content_type == "transcript":
+            # Preserve the meeting extraction flow for local transcriptions.
+            from core.extractor import extract_meeting_data
+            meeting_data = extract_meeting_data(content)
+        else:
+            meeting_data = {
+                "action_items": [],
+                "key_decisions": [],
+                "open_questions": [],
+            }
+
+        rag_chain = build_rag_chain(content)
+
+        return {
+            "title": title,
+            "transcript": content,
+            "summary": summary,
+            "action_items": meeting_data["action_items"],
+            "key_decisions": meeting_data["key_decisions"],
+            "open_questions": meeting_data["open_questions"],
+            "rag_chain": rag_chain,
+            "content_type": content_type,
+        }
+
+    finally:
+        # Remove the uploaded video and its extracted audio chunks.
+        temp_dirs = {
+            str(Path(path).parent)
+            for path in chunk_paths
+        }
+
+        for temp_dir in temp_dirs:
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
+        if temp_video_path and os.path.exists(temp_video_path):
+            os.remove(temp_video_path)
 
 
 if __name__ == "__main__":
@@ -87,18 +127,5 @@ if __name__ == "__main__":
     result = run_pipeline(source, language)
 
     print(f"\nTitle: {result['title']}")
-    print(f"\nVideo Notes:\n{result['transcript']}")
+    print(f"\nContent:\n{result['transcript']}")
     print(f"\nSummary:\n{result['summary']}")
-
-    print("\nChat with the video notes (type 'exit' to quit).")
-    rag_chain = result["rag_chain"]
-
-    while True:
-        question = input("You: ").strip()
-
-        if question.lower() in {"exit", "quit", "q"}:
-            break
-        if not question:
-            continue
-
-        print(f"\nAssistant: {rag_chain.invoke(question)}\n")

@@ -53,3 +53,4 @@ langchain-text-splitters
 python-dotenv
 
 google-genai
+

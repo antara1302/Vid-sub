@@ -452,7 +452,11 @@ with st.sidebar:
 
     st.markdown('<span class="badge badge-purple">Input</span>', unsafe_allow_html=True)
     source = st.text_input("YouTube URL or File Path", placeholder="https://youtube.com/watch?v=... or /path/to/file.mp4")
-
+    uploaded_video = st.file_uploader(
+        "Or upload a local video",
+        type=["mp4", "mov", "mkv", "avi", "webm"],
+        help="Upload a video file from your computer."
+    )
     language = st.selectbox("Language", ["english", "hinglish"], index=0)
 
     run_btn = st.button("⚡  Analyse", use_container_width=True)
@@ -477,8 +481,10 @@ st.markdown("---")
 
 # ── Run Pipeline ────────────────────────────────────────────────────────────────
 if run_btn:
-    if not source.strip():
-        st.error("Please enter a YouTube URL or file path.")
+    if not source.strip() and uploaded_video is None:
+        st.error("Please enter a YouTube URL or upload a local video.")
+    elif source.strip() and uploaded_video is not None:
+        st.error("Please use either a YouTube URL or a local video, not both.")
     else:
         st.session_state.pipeline_done = False
         st.session_state.result = None
@@ -503,9 +509,9 @@ if run_btn:
 
             result = run_pipeline(
                 source,
-                language
+                language,
+                uploaded_video=uploaded_video,
             )
-
             # Pipeline completed successfully
             update_step("transcript", "done")
             update_step("summary", "done")
