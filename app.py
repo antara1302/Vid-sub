@@ -565,32 +565,29 @@ if st.session_state.result:
         </div>""", unsafe_allow_html=True)
 
     with col2:
-        with st.expander("📝 Full Transcript", expanded=False):
-            st.markdown(f'<div class="transcript-box">{r["transcript"]}</div>', unsafe_allow_html=True)
-
+        content_label = (
+            "📝 Video Notes"
+            if r.get("content_type") == "video_notes"
+            else "📝 Full Transcript"
+        )
+        with st.expander(content_label, expanded=False):
+            st.markdown(r["transcript"])
     # Second row: action items | decisions | questions
-    c1, c2, c3 = st.columns(3, gap="medium")
+    # Meeting-specific results are only shown for transcripts.
+    if r.get("content_type") != "video_notes":
+        c1, c2, c3 = st.columns(3, gap="medium")
 
-    with c1:
-        st.markdown(f"""
-        <div class="card">
-            <div class="card-title">✅ Action Items</div>
-            <div class="card-content">{r['action_items']}</div>
-        </div>""", unsafe_allow_html=True)
+        with c1:
+            st.markdown("### ✅ Action Items")
+            st.write(r["action_items"])
 
-    with c2:
-        st.markdown(f"""
-        <div class="card">
-            <div class="card-title">🔑 Key Decisions</div>
-            <div class="card-content">{r['key_decisions']}</div>
-        </div>""", unsafe_allow_html=True)
+        with c2:
+            st.markdown("### 🔑 Key Decisions")
+            st.write(r["key_decisions"])
 
-    with c3:
-        st.markdown(f"""
-        <div class="card">
-            <div class="card-title">❓ Open Questions</div>
-            <div class="card-content">{r['open_questions']}</div>
-        </div>""", unsafe_allow_html=True)
+        with c3:
+            st.markdown("### ❓ Open Questions")
+            st.write(r["open_questions"])
 
     st.markdown("---")
 

@@ -1,3 +1,4 @@
+from pathlib import Path
 from dotenv import load_dotenv
 
 from core.transcriber import transcribe_all
@@ -7,147 +8,97 @@ from core.summarizer import (
     translate_to_english,
 )
 from core.extractor import extract_meeting_data
-from core.rag_engine import build_rag_chain, ask_question
+from core.rag_engine import build_rag_chain
 from core.youtube_transcript import (
     extract_video_id,
-    get_youtube_transcript,
+    get_youtube_video_notes,
 )
+
 load_dotenv()
+
 
 def run_pipeline(source: str, language: str = "english") -> dict:
     print("Starting AI Video Assistant")
 
-    # 1. Try YouTube transcript first
     video_id = extract_video_id(source)
 
     if video_id:
-        print("YouTube URL detected.")
-        print("Trying to fetch YouTube transcript...")
+        print("YouTube URL detected. Generating video notes...")
 
-        if language.lower() == "hinglish":
-            # Hindi videos commonly have Hindi auto-generated captions
-            transcript = get_youtube_transcript(
-                video_id,
-                languages=["hi", "en"]
-            )
-        else:
-            transcript = get_youtube_transcript(
-                video_id,
-                languages=["en"]
-            )
-
-        if not transcript:
-            raise RuntimeError(
-                "No usable YouTube transcript was found for this video."
-            )
-
-        print("✅ YouTube transcript found.")
-        print(
-            f"Raw transcript (first 300 characters): "
-            f"{transcript[:300]}"
+        languages = (
+            ["hi", "en"]
+            if language.lower() == "hinglish"
+            else ["en"]
         )
+
+        content = get_youtube_video_notes(
+            video_id,
+            languages=languages,
+        )
+        content_type = "video_notes"
 
     else:
-        raise ValueError(
-            "Please provide a valid YouTube URL."
+        file_path = Path(source).expanduser()
+
+        if not file_path.is_file():
+            raise ValueError(
+                "Please provide a valid YouTube URL or existing local file."
+            )
+
+        raise NotImplementedError(
+            "Local-file transcription is unchanged but needs the existing "
+            "audio extraction/chunking pipeline to be connected here."
         )
 
-    #2. Transcript obtained above
-    raw_transcript = transcript
+    if not content or not content.strip():
+        raise RuntimeError("No usable video notes were generated.")
 
-    # Translate Hinglish/Hindi transcript to English
-    if language.lower() == "hinglish":
-        print("Translating Hinglish transcript to English...")
-        transcript = translate_to_english(raw_transcript)
-        print("✅ Translation complete.")
-
-
-    # 3. Generate summary
-    summary = summarize(transcript)
-
-    # 4. Generate title from summary
+    # The YouTube content is already structured notes.
+    # Do not translate it as if it were a raw transcript.
+    summary = summarize(content)
     title = generate_title(summary)
 
-    # 5. Extract action items, decisions, and questions
-    meeting_data = extract_meeting_data(transcript)
+    # The meeting extractor expects a meeting transcript.
+    # Don't invent meeting actions from ordinary video notes.
+    meeting_data = {
+        "action_items": [],
+        "key_decisions": [],
+        "open_questions": [],
+    }
 
-    # 6. Build RAG chain
-    rag_chain = build_rag_chain(transcript)
+    rag_chain = build_rag_chain(content)
 
     return {
         "title": title,
-        "transcript": transcript,
+        "transcript": content,  # Kept for app.py compatibility
         "summary": summary,
         "action_items": meeting_data["action_items"],
         "key_decisions": meeting_data["key_decisions"],
         "open_questions": meeting_data["open_questions"],
         "rag_chain": rag_chain,
+        "content_type": content_type,
     }
 
 
 if __name__ == "__main__":
-
-    # CLI entry point
-    source = input(
-        "Enter YouTube URL or local file path: "
-    ).strip()
-
-    language = input(
-        "Language (english/hinglish): "
-    ).strip() or "english"
+    source = input("Enter a public YouTube URL: ").strip()
+    language = input("Language (english/hinglish): ").strip() or "english"
 
     result = run_pipeline(source, language)
 
-    print("\n" + "=" * 60)
+    print(f"\nTitle: {result['title']}")
+    print(f"\nVideo Notes:\n{result['transcript']}")
+    print(f"\nSummary:\n{result['summary']}")
 
-    print(f"📌 Title: {result['title']}")
-
-    print(
-        f"\n📋 Summary:\n"
-        f"{result['summary']}"
-    )
-
-    print(
-        f"\n✅ Action Items:\n"
-        f"{result['action_items']}"
-    )
-
-    print(
-        f"\n🔑 Key Decisions:\n"
-        f"{result['key_decisions']}"
-    )
-
-    print(
-        f"\n❓ Open Questions:\n"
-        f"{result['open_questions']}"
-    )
-
-    print("=" * 60)
-
-    # Phase 2 — Chat with your meeting via RAG
-    print(
-        "\n💬 Chat with your meeting "
-        "(type 'exit' to quit)\n"
-    )
-
+    print("\nChat with the video notes (type 'exit' to quit).")
     rag_chain = result["rag_chain"]
 
     while True:
-
         question = input("You: ").strip()
 
-        if question.lower() in ["exit", "quit", "q"]:
-            print("👋 Goodbye!")
+        if question.lower() in {"exit", "quit", "q"}:
             break
-
         if not question:
             continue
 
-        answer = ask_question(
-            rag_chain,
-            question
-        )
-
-        print(
-            f"\n🤖 Assistant: {answer}\n"
-        )
+        print(f"\nAssistant: {rag_chain.invoke(question)}\n")
